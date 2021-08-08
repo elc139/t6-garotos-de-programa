@@ -68,7 +68,8 @@ int main(int argc, char *argv[])
   MPI_Comm_rank(MPI_COMM_WORLD, &procid);
   MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
   printf("Starting! I'm %d of %d\n", procid + 1, numprocs);
-  for (int frame = procid; frame == procid; frame++)
+  int procid_frames = frames / numprocs;
+  for (int frame = procid * procid_frames; frame < ((procid + 1) * procid_frames); frame++)
   {
     //MPI_Bcast(&frames, 1, MPI_INT, 0, MPI_COMM_WORLD);
     const double xMin = xMid - delta;
@@ -107,7 +108,7 @@ int main(int argc, char *argv[])
   // verify result by writing frames to BMP files
   if ((width <= 256) && (frames <= 100))
   {
-    for (int frame = procid; frame == procid; frame++)
+    for (int frame = procid * procid_frames; frame < ((procid + 1) * procid_frames); frame++)
     {
       char name[32];
       sprintf(name, "fractal%d.bmp", frame + 1000);
