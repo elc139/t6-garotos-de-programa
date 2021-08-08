@@ -23,27 +23,38 @@ Author: Martin Burtscher
 #include <cstdlib>
 #include <sys/time.h>
 #include <mpi.h>
-#include "fractal.h"
-
+#include "fractalpar.h"
 
 static const double Delta = 0.001;
-static const double xMid =  0.23701;
-static const double yMid =  0.521;
+static const double xMid = 0.23701;
+static const double yMid = 0.521;
 
 int main(int argc, char *argv[])
 {
   printf("Fractal v1.6 [serial]\n");
 
   // check command line
-  if (argc != 3) {fprintf(stderr, "usage: %s frame_width num_frames\n", argv[0]); exit(-1);}
+  if (argc != 3)
+  {
+    fprintf(stderr, "usage: %s frame_width num_frames\n", argv[0]);
+    exit(-1);
+  }
   int width = atoi(argv[1]);
-  if (width < 10) {fprintf(stderr, "error: frame_width must be at least 10\n"); exit(-1);}
+  if (width < 10)
+  {
+    fprintf(stderr, "error: frame_width must be at least 10\n");
+    exit(-1);
+  }
   int frames = atoi(argv[2]);
-  if (frames < 1) {fprintf(stderr, "error: num_frames must be at least 1\n"); exit(-1);}
+  if (frames < 1)
+  {
+    fprintf(stderr, "error: num_frames must be at least 1\n");
+    exit(-1);
+  }
   printf("computing %d frames of %d by %d fractal\n", frames, width, width);
 
   // allocate picture array
-  unsigned char* pic = new unsigned char[frames * width * width];
+  unsigned char *pic = new unsigned char[frames * width * width];
 
   // start time
   timeval start, end;
@@ -51,28 +62,30 @@ int main(int argc, char *argv[])
 
   // compute frames
   double delta = Delta;
-  
-  
-  
+
   MPI_Init(&argc, &argv);
   int procid, numprocs;
   MPI_Comm_rank(MPI_COMM_WORLD, &procid);
   MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
-  for (int frame = 0; frame < frames; frame++) {
-    if (frame % numprocs != procid) continue;
+  printf("Starting! I'm %d of %d\n", procid + 1, numprocs);
+  for (int frame = procid; frame == procid; frame++)
+  {
     //MPI_Bcast(&frames, 1, MPI_INT, 0, MPI_COMM_WORLD);
     const double xMin = xMid - delta;
     const double yMin = yMid - delta;
     const double dw = 2.0 * delta / width;
-    for (int row = 0; row < width; row++) {
+    for (int row = 0; row < width; row++)
+    {
       const double cy = yMin + row * dw;
-      for (int col = 0; col < width; col++) {
+      for (int col = 0; col < width; col++)
+      {
         const double cx = xMin + col * dw;
         double x = cx;
         double y = cy;
         int depth = 256;
         double x2, y2;
-        do {
+        do
+        {
           x2 = x * x;
           y2 = y * y;
           y = 2 * x * y + cy;
@@ -84,23 +97,25 @@ int main(int argc, char *argv[])
     }
     delta *= 0.98;
   }
-  MPI_Finalize(); 
+  MPI_Finalize();
 
   // end time
   gettimeofday(&end, NULL);
   double runtime = end.tv_sec + end.tv_usec / 1000000.0 - start.tv_sec - start.tv_usec / 1000000.0;
-  printf("compute time: %.4f s\n", runtime);
+  printf("compute time: %.4f s, I'm %d of %d\n", runtime, procid + 1, numprocs);
 
   // verify result by writing frames to BMP files
-  if ((width <= 256) && (frames <= 100)) {
-    for (int frame = 0; frame < frames; frame++) {
+  if ((width <= 256) && (frames <= 100))
+  {
+    for (int frame = procid; frame == procid; frame++)
+    {
       char name[32];
       sprintf(name, "fractal%d.bmp", frame + 1000);
       writeBMP(width, width, &pic[frame * width * width], name);
     }
   }
-  
-  delete [] pic;
-  
+
+  delete[] pic;
+
   return 0;
 }
