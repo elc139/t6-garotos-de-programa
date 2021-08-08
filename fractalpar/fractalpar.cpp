@@ -22,7 +22,9 @@ Author: Martin Burtscher
 
 #include <cstdlib>
 #include <sys/time.h>
+#include <mpi.h>
 #include "fractal.h"
+
 
 static const double Delta = 0.001;
 static const double xMid =  0.23701;
@@ -49,7 +51,16 @@ int main(int argc, char *argv[])
 
   // compute frames
   double delta = Delta;
+  
+  
+  
+  MPI_Init(&argc, &argv);
+  int procid, numprocs;
+  MPI_Comm_rank(MPI_COMM_WORLD, &procid);
+  MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
   for (int frame = 0; frame < frames; frame++) {
+    if (frame % numprocs != procid) continue;
+    //MPI_Bcast(&frames, 1, MPI_INT, 0, MPI_COMM_WORLD);
     const double xMin = xMid - delta;
     const double yMin = yMid - delta;
     const double dw = 2.0 * delta / width;
@@ -73,6 +84,7 @@ int main(int argc, char *argv[])
     }
     delta *= 0.98;
   }
+  MPI_Finalize(); 
 
   // end time
   gettimeofday(&end, NULL);
@@ -87,7 +99,8 @@ int main(int argc, char *argv[])
       writeBMP(width, width, &pic[frame * width * width], name);
     }
   }
-
+  
   delete [] pic;
+  
   return 0;
 }
