@@ -69,6 +69,8 @@ int main(int argc, char *argv[])
   MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
   printf("Starting! I'm %d of %d\n", procid + 1, numprocs);
   int procid_frames = frames / numprocs;
+  for (int i = 0; i < procid * procid_frames; i++)
+    delta *= 0.98;
   for (int frame = procid * procid_frames; frame < ((procid + 1) * procid_frames); frame++)
   {
     //MPI_Bcast(&frames, 1, MPI_INT, 0, MPI_COMM_WORLD);
